@@ -1,0 +1,108 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  simple schedule serverless application setup
+  
+Globals:
+  Api:
+    MinimumCompressionSize: 0
+    TracingEnabled: true
+  Function:
+    Tracing: Active
+    Timeout: 3
+    Runtime: nodejs14.x
+    Environment:
+      Variables:
+        ENV: Production
+        PGDBClusterArn: !ImportValue "default-db-cluster-arn"
+        PGUSER: !ImportValue "default-db-admin-username"
+        PGHOST: !ImportValue "default-db-cluster-endpoint"
+        PGPASSWORD: !ImportValue "default-db-password"
+        PGDATABASE: !ImportValue "default-db-name"
+        PGPORT: 5432 
+        SecretArn: !ImportValue "default-db-secret"
+
+Conditions:
+  isSamLocal: !Equals [!Ref "AWS::StackName", ""]
+  isMaster: !Equals [!Ref "AWS::StackName", "auth-service"]
+
+Resources:
+  AuthServiceApiGateway:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: auth-service-api
+      StageName: prod
+      DefinitionBody:
+        Fn::Transform:
+          Name: AWS::Include
+          Parameters:
+            Location: ./docs/api.yaml
+
+  AuthorizerFunction:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      CodeUri: dist/
+      Handler: authorizer-function.lambdaHandler
+      Policies:
+        - AWSSecretsManagerGetSecretValuePolicy:
+            SecretArn: !ImportValue "default-db-secret"
+        - Statement:
+          - Effect: Allow
+            Action: 'rds-data:ExecuteStatement'
+            Resource: !ImportValue "default-db-cluster-arn"
+
+  LoginFunction:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      CodeUri: dist/
+      Handler: login-function.lambdaHandler
+      Policies:
+        - AWSSecretsManagerGetSecretValuePolicy:
+            SecretArn: !ImportValue "default-db-secret"
+        - Statement:
+          - Effect: Allow
+            Action: 'rds-data:ExecuteStatement'
+            Resource: !ImportValue "default-db-cluster-arn"
+
+# ##########################################################################################################
+# # Function permissions grant an AWS service or another account permission to use a function                                                               #
+# #########################################################################################################
+  LoginFunctionResourcePermission:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      Action: 'lambda:InvokeFunction'
+      Principal: apigateway.amazonaws.com
+      FunctionName: !Ref LoginFunction
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${AuthServiceApiGateway}/*'
+
+  AuthorizerFunctionResourcePermission:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      Action: 'lambda:InvokeFunction'
+      Principal: apigateway.amazonaws.com
+      FunctionName: !Ref AuthorizerFunction
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${AuthServiceApiGateway}/*'
+
+
+Outputs:
+  AuthorizerArn:
+    Description: authorizer ARN
+    Value: !GetAtt AuthorizerFunction.Arn
+    Export:
+      Name: !Sub "authorizer-function-arn" 
+
+  AuthorizerUri:
+    Description: authorizer Uri
+    Value: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${AuthorizerFunction.Arn}/invocations" 
+    Export:
+      Name: "authorizerUri"
+
+  AuthorizerFunctionName:
+    Description: authorizer Function Name
+    Value: !Ref AuthorizerFunction
+    Export:
+      Name: "authorizer-function-name"
+
+  # API:
+  #   Description: auth-server-api
+  #   Value: !Sub "https://${AuthServiceApiGateway}.execute-api.${AWS::Region}.amazonaws.com/"
