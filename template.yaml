@@ -14,13 +14,14 @@ Globals:
     Environment:
       Variables:
         ENV: Production
-        PGDBClusterArn: !ImportValue "default-db-cluster-arn"
+        PGDBCLUSTERARN: !ImportValue "default-db-cluster-arn"
         PGUSER: !ImportValue "default-db-admin-username"
         PGHOST: !ImportValue "default-db-cluster-endpoint"
         PGPASSWORD: !ImportValue "default-db-password"
         PGDATABASE: !ImportValue "default-db-name"
         PGPORT: 5432 
-        SecretArn: !ImportValue "default-db-secret"
+        SECRET_ARN: !ImportValue "default-db-secret"
+        AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1'
 
 Conditions:
   isSamLocal: !Equals [!Ref "AWS::StackName", ""]
