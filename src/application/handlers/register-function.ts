@@ -2,24 +2,26 @@ import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda'
 import { redactCustomerDetails } from '../../utils/RedactCustomerDetails'
 import { AppError } from '../../utils/appError'
 import db from '../infrastructure/database/postgres-connection'
-import { correctPassword, createSendToken } from '../../utils/auth-helpers'
+import { createSendToken } from '../../utils/auth-helpers'
 import { HTTP_STATUS_CODE } from '../../utils/HttpClient/http-status-codes'
+import { v4 as uuidv4 } from 'uuid'
+// const validator = require('validator');
 
 export const lambdaHandler = async function (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> {
   if (!event.body) throw new Error('Invalid request payload')
 
-  const loginParsedBody = (JSON.parse(event.body) || {}) as {
+  const registerParsedBody = (JSON.parse(event.body) || {}) as {
     email: string
     password: string
   }
 
-  console.info('login request', {
-    request: redactCustomerDetails(loginParsedBody),
+  console.info('register request', {
+    request: redactCustomerDetails(registerParsedBody),
   })
 
-  const { email, password } = loginParsedBody
+  const { email, password } = registerParsedBody
 
   try {
     // 1) Check if email and password exist
@@ -30,23 +32,20 @@ export const lambdaHandler = async function (
       )
     }
 
-    // 2) Check if user exists && password is correct
-    const resultParams = await db.query<{ password: string }>(
-      `SELECT * FROM user8 WHERE email = :email`,
-      { email }
+    // const rndInt = Math.floor(Math.random() * 100) + 1
+    const createUserRequest = { email, password, id: uuidv4() }
+
+    // 2) create user / insert new user to database
+    await db.query(
+      `INSERT INTO user (id,email,password) VALUES(:id,:email,:password)`,
+      createUserRequest
     )
 
-    const user = resultParams.records[0]
-
-    if (!user || !(await correctPassword(password, user.password))) {
-      throw new AppError('Incorrect email or password', 401)
-    }
-
     // 3) If everything ok, send token to client
-    const responseBody = createSendToken(user)
+    const responseBody = createSendToken(createUserRequest)
 
     return {
-      statusCode: HTTP_STATUS_CODE.OK,
+      statusCode: HTTP_STATUS_CODE.CREATED,
       body: JSON.stringify(responseBody),
     }
   } catch (err) {
