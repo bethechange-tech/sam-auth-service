@@ -1,5 +1,11 @@
 openapi: 3.0.1
 
+# "email": {
+#   "type": "string",
+#   "format": "email",
+#   "pattern": "\\.[Ii][Oo]$"
+# }
+
 info:
   title: auth-service
   version: 1
@@ -16,6 +22,21 @@ paths:
         type: aws_proxy
         uri:
           Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LoginFunction.Arn}/invocations
+        responses:
+          default:
+            statusCode: 200
+
+  /register:
+    post:
+      summary: register
+      description: register a user and send them an access token
+      tags:
+        - register
+      x-amazon-apigateway-integration:
+        httpMethod: POST
+        type: aws_proxy
+        uri:
+          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${RegisterFunction.Arn}/invocations
         responses:
           default:
             statusCode: 201

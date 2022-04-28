@@ -1,14 +1,14 @@
 import { APIGatewayAuthorizerResult } from 'aws-lambda'
 
 /**
- * @class IamService used for authenticating users
+ * @class IamService used to grant access
  */
 export default class IamService {
   generateAuthResponse(
     principalId: string,
     effect: string,
     methodArn: string,
-    permissionData = { authorizer: true }
+    permissionData: any = { authorizer: true }
   ): APIGatewayAuthorizerResult {
     const policyDocument = this.generatePolicyDocument(effect, methodArn)
 

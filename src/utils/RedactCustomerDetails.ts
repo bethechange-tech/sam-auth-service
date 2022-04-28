@@ -1,6 +1,6 @@
 import { set, has, cloneDeep } from 'lodash'
 
-const TO_REDACT: string[] = ['email', 'password']
+const TO_REDACT: string[] = ['email', 'password', 'methodArn']
 
 /**
  * Redacts sensitive customer information.

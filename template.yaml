@@ -22,6 +22,8 @@ Globals:
         PGPORT: 5432 
         SECRET_ARN: !ImportValue "default-db-secret"
         AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1'
+        JWT_SECRET: "somesecretpossiblyssl"
+        JWT_EXPIRES_IN: "30d"
 
 Conditions:
   isSamLocal: !Equals [!Ref "AWS::StackName", ""]
@@ -65,6 +67,19 @@ Resources:
             Action: 'rds-data:ExecuteStatement'
             Resource: !ImportValue "default-db-cluster-arn"
 
+  RegisterFunction:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      CodeUri: dist/
+      Handler: register-function.lambdaHandler
+      Policies:
+        - AWSSecretsManagerGetSecretValuePolicy:
+            SecretArn: !ImportValue "default-db-secret"
+        - Statement:
+          - Effect: Allow
+            Action: 'rds-data:ExecuteStatement'
+            Resource: !ImportValue "default-db-cluster-arn"
+
 # ##########################################################################################################
 # # Function permissions grant an AWS service or another account permission to use a function                                                               #
 # #########################################################################################################
@@ -74,6 +89,14 @@ Resources:
       Action: 'lambda:InvokeFunction'
       Principal: apigateway.amazonaws.com
       FunctionName: !Ref LoginFunction
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${AuthServiceApiGateway}/*'
+
+  RegisterFunctionResourcePermission:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      Action: 'lambda:InvokeFunction'
+      Principal: apigateway.amazonaws.com
+      FunctionName: !Ref RegisterFunction
       SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${AuthServiceApiGateway}/*'
 
   AuthorizerFunctionResourcePermission:
