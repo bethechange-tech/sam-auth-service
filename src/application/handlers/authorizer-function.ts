@@ -35,7 +35,6 @@ export const lambdaHandler = async function (
     if (!token) {
       const message = 'You are not logged in! Please log in to get access.'
       console.info(message, 'token failed')
-
       throw new AppError(message, HTTP_STATUS_CODE.UNAUTHORIZED)
     }
 
