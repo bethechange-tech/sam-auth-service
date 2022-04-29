@@ -1,4 +1,3 @@
-import { redactCustomerDetails } from '../../../utils/RedactCustomerDetails'
 import db from './postgres-connection'
 
 export async function getUserById(id: string) {
@@ -7,6 +6,5 @@ export async function getUserById(id: string) {
     { id }
   )
 
-  console.info(redactCustomerDetails(resultParams), 'resultParams')
   return resultParams.records[0]
 }

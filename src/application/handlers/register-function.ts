@@ -1,10 +1,10 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda'
 import { redactCustomerDetails } from '../../utils/RedactCustomerDetails'
 import { AppError } from '../../utils/appError'
-import db from '../infrastructure/database/postgres-connection'
-import { createSendToken } from '../../utils/auth-helpers'
+import db from '../infrastructure/database/pg/postgres-connection'
 import { HTTP_STATUS_CODE } from '../../utils/HttpClient/http-status-codes'
 import { v4 as uuidv4 } from 'uuid'
+import AuthService from '../services/auth-service'
 // const validator = require('validator');
 
 export const lambdaHandler = async function (
@@ -41,8 +41,9 @@ export const lambdaHandler = async function (
       createUserRequest
     )
 
+    const authService = new AuthService()
     // 3) If everything ok, send token to client
-    const responseBody = createSendToken(createUserRequest)
+    const responseBody = authService.createAccessToken(createUserRequest)
 
     return {
       statusCode: HTTP_STATUS_CODE.CREATED,

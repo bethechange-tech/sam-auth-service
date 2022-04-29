@@ -1,6 +1,6 @@
 import { lambdaHandler } from '../authorizer-function'
 import { APIGatewayRequestAuthorizerEvent } from 'aws-lambda'
-import authEvent from '../../../../events/authorizerRequestEvent.json'
+import authEvent from '../../infrastructure/events/authorizerRequestEvent.json'
 import { HTTP_STATUS_CODE } from '../../../utils/HttpClient/http-status-codes'
 
 jest.mock('data-api-client', () => {

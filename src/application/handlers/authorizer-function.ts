@@ -4,12 +4,13 @@ import {
   APIGatewayAuthorizerResult,
 } from 'aws-lambda'
 import { AppError } from '../../utils/appError'
-import { promisify } from 'util'
-import jwt from 'jsonwebtoken'
+// import { promisify } from 'util'
+// import jwt from 'jsonwebtoken'
 import { HTTP_STATUS_CODE } from '../../utils/HttpClient/http-status-codes'
-import { getUserById } from '../infrastructure/database/query-helpers'
+import { getUserById } from '../infrastructure/database/pg/query-helpers'
 import { pick } from 'lodash'
 import { redactCustomerDetails } from '../../utils/RedactCustomerDetails'
+import AuthService from '../services/auth-service'
 export const lambdaHandler = async function (
   event: APIGatewayRequestAuthorizerEvent
 ): Promise<APIGatewayAuthorizerResult> {
@@ -41,15 +42,14 @@ export const lambdaHandler = async function (
     console.info('decoding in process....')
 
     // 2) Verification token
-    const decoded = (await promisify(jwt.verify)(
-      token,
-      process.env.JWT_SECRET as string
-    )) as unknown as { id: string }
+    const authService = new AuthService()
+    const decoded = await authService.verifyAccessToken(token)
 
     console.info('token has been decoded...')
 
     // 2) Check if user exists && password is correct
     const user = await getUserById(decoded.id)
+    console.info(redactCustomerDetails(user), 'user from database')
 
     if (!user) {
       const message = 'The user belonging to this token does no longer exist.'

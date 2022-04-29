@@ -1,9 +1,9 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda'
 import { redactCustomerDetails } from '../../utils/RedactCustomerDetails'
 import { AppError } from '../../utils/appError'
-import db from '../infrastructure/database/postgres-connection'
-import { correctPassword, createSendToken } from '../../utils/auth-helpers'
+import db from '../infrastructure/database/pg/postgres-connection'
 import { HTTP_STATUS_CODE } from '../../utils/HttpClient/http-status-codes'
+import AuthService from '../services/auth-service'
 
 export const lambdaHandler = async function (
   event: APIGatewayProxyEvent
@@ -14,6 +14,8 @@ export const lambdaHandler = async function (
     email: string
     password: string
   }
+
+  const authService = new AuthService()
 
   console.info('login request', {
     request: redactCustomerDetails(loginParsedBody),
@@ -38,12 +40,15 @@ export const lambdaHandler = async function (
 
     const user = resultParams.records[0]
 
-    if (!user || !(await correctPassword(password, user.password))) {
+    if (
+      !user ||
+      !(await authService.isCorrectPassword(password, user.password))
+    ) {
       throw new AppError('Incorrect email or password', 401)
     }
 
     // 3) If everything ok, send token to client
-    const responseBody = createSendToken(user)
+    const responseBody = authService.createAccessToken(user)
 
     return {
       statusCode: HTTP_STATUS_CODE.OK,
