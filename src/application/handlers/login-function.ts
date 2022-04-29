@@ -4,6 +4,7 @@ import { AppError } from '../../utils/appError'
 import db from '../infrastructure/database/pg/postgres-connection'
 import { HTTP_STATUS_CODE } from '../../utils/HttpClient/http-status-codes'
 import AuthService from '../services/auth-service'
+import { getUserByEmail } from '../infrastructure/database/pg/query-helpers'
 
 export const lambdaHandler = async function (
   event: APIGatewayProxyEvent
@@ -33,12 +34,7 @@ export const lambdaHandler = async function (
     }
 
     // 2) Check if user exists && password is correct
-    const resultParams = await db.query<{ password: string }>(
-      `SELECT * FROM user8 WHERE email = :email`,
-      { email }
-    )
-
-    const user = resultParams.records[0]
+    const user = await getUserByEmail(email)
 
     if (
       !user ||

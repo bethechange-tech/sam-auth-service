@@ -8,3 +8,13 @@ export async function getUserById(id: string) {
 
   return resultParams.records[0]
 }
+
+export async function getUserByEmail(email: string) {
+  const resultParams = await db.query<{ password: string }>(
+    `SELECT * FROM user8 WHERE email = :email`,
+    { email }
+  )
+
+  return resultParams.records[0]
+}
+   
