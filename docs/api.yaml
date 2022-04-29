@@ -1,5 +1,11 @@
 openapi: 3.0.1
 
+# "email": {
+#   "type": "string",
+#   "format": "email",
+#   "pattern": "\\.[Ii][Oo]$"
+# }
+
 info:
   title: auth-service
   version: 1

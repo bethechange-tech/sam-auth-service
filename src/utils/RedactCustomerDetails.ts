@@ -1,6 +1,6 @@
 import { set, has, cloneDeep } from 'lodash'
 
-const TO_REDACT: string[] = ['email', 'password']
+const TO_REDACT: string[] = ['email', 'password', 'methodArn', 'records.name']
 
 /**
  * Redacts sensitive customer information.
@@ -13,10 +13,15 @@ const TO_REDACT: string[] = ['email', 'password']
  *
  * @returns {object} redacted object
  */
-export function redactCustomerDetails(data: object): object {
+export function redactCustomerDetails(
+  data: object,
+  OPTIONAL_REDACT: string[] = []
+): object {
   const redactedData: object = cloneDeep(data)
 
-  TO_REDACT.forEach((field) => {
+  const redact = [...TO_REDACT, ...OPTIONAL_REDACT]
+
+  redact.forEach((field) => {
     if (has(redactedData, field)) {
       set(redactedData, field, '<REDACTED>')
     }
