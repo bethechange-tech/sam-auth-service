@@ -1,11 +1,11 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda'
 import { redactCustomerDetails } from '../../utils/RedactCustomerDetails'
 import { AppError } from '../../utils/appError'
-import db from '../infrastructure/database/pg/postgres-connection'
 import { HTTP_STATUS_CODE } from '../../utils/HttpClient/http-status-codes'
 import { v4 as uuidv4 } from 'uuid'
 import AuthService from '../services/auth-service'
 import logger from '../services/logging'
+import RDSService from '../services/rds-service'
 // const validator = require('validator');
 
 export const lambdaHandler = async function (
@@ -36,10 +36,10 @@ export const lambdaHandler = async function (
     const createUserRequest = { email, password, id: uuidv4() }
 
     // 2) create user / insert new user to database
-    await db.query(
-      `INSERT INTO user (id,email,password) VALUES(:id,:email,:password)`,
-      createUserRequest
-    )
+
+    const rdsService = new RDSService()
+
+    await rdsService.create(createUserRequest)
 
     const authService = new AuthService()
 

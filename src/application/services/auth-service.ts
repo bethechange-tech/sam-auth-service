@@ -2,7 +2,6 @@ import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import { promisify } from 'util'
 
-
 /**
  * @class AuthService used authenticate or verify
  */

@@ -3,6 +3,7 @@ import winston, { format } from 'winston'
 class Logger {
   private logger: winston.Logger
   public meta: Record<string, any>
+  
   constructor(meta: Record<string, any>) {
     this.logger = winston.createLogger({
       level: 'info',
@@ -15,7 +16,6 @@ class Logger {
   }
 
   error(message: string, meta?: Record<string, any>) {
-    console.log('that should be logging the errors')
     this.logger.error(message, this.merged(meta))
   }
 
@@ -35,7 +35,7 @@ class Logger {
     if (!extra) {
       return this.meta
     }
-    
+
     return Object.assign(this.meta, extra)
   }
 }

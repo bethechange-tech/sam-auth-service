@@ -4,7 +4,7 @@ import { APIGatewayAuthorizerResult } from 'aws-lambda'
  * @class IamService used to grant access
  */
 export default class IamService {
-  generateAuthResponse(
+  generateResponse(
     principalId: string,
     effect: string,
     methodArn: string,

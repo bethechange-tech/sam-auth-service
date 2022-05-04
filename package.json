@@ -61,6 +61,7 @@
     "@babel/plugin-transform-typescript": "^7.16.8",
     "@babel/preset-env": "^7.16.11",
     "@babel/preset-typescript": "^7.16.7",
+    "@feathersjs/hooks": "^0.7.4",
     "@jest/types": "^27.2.4",
     "@types/data-api-client": "^1.2.4",
     "@types/jest": "^27.4.1",

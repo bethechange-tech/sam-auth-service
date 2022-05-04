@@ -4,8 +4,6 @@ import {
   APIGatewayAuthorizerResult,
 } from 'aws-lambda'
 import { AppError } from '../../utils/appError'
-// import { promisify } from 'util'
-// import jwt from 'jsonwebtoken'
 import { HTTP_STATUS_CODE } from '../../utils/HttpClient/http-status-codes'
 import { getUserById } from '../infrastructure/database/pg/query-helpers'
 import { pick } from 'lodash'
@@ -13,14 +11,14 @@ import { redactCustomerDetails } from '../../utils/RedactCustomerDetails'
 import AuthService from '../services/auth-service'
 import logger from '../services/logging'
 
-export const lambdaHandler = async function (
+export const mainFunction = async function (
   event: APIGatewayRequestAuthorizerEvent
 ): Promise<APIGatewayAuthorizerResult> {
-  const pickedEvent = pick(event, ['type', 'methodArn', 'path'])
-  logger.info('authorizer request handler', redactCustomerDetails(pickedEvent))
-
+  console.log('----99----')
+  console.log(JSON.stringify(event))
+  console.log('====99====')
   const iamService = new IamService()
-  const methodArn = pickedEvent.methodArn
+  const methodArn = event.methodArn
 
   try {
     let token: string | null = null
@@ -52,27 +50,63 @@ export const lambdaHandler = async function (
 
     if (!user) {
       const message = 'The user belonging to this token does no longer exist.'
-      logger.info(message + ' user no longer exist')
+      logger.info(message)
 
       throw new AppError(message, HTTP_STATUS_CODE.UNAUTHORIZED)
     }
 
     logger.info('attemting to grant access....')
-    return iamService.generateAuthResponse('user', 'Allow', methodArn, {
+    return iamService.generateResponse('user', 'Allow', methodArn, {
       user,
     })
   } catch (err) {
     const error = err as AppError
 
-    const context = {
+    const errorContext = {
       user: null,
       message: error.message,
       statuscode: error.statusCode,
       isOperational: error?.isOperational,
     }
 
-    logger.error('Error while trying to grant access', context)
+    logger.error('Error while trying to grant access', errorContext)
 
-    return iamService.generateAuthResponse('user', 'Deny', methodArn, context)
+    return iamService.generateResponse('user', 'Deny', methodArn, errorContext)
   }
 }
+
+import { HookContext, hooks, NextFunction } from '@feathersjs/hooks'
+
+const logRuntime = async (context: any, next: NextFunction) => {
+  const start = new Date().getTime()
+
+  await next()
+
+  const end = new Date().getTime()
+
+  console.log(
+    `Function '${context?.method || '[no name]'}' returned '${
+      context.result
+    }' after ${end - start}ms`
+  )
+}
+
+const logEvent = async (
+  context: HookContext<APIGatewayRequestAuthorizerEvent>,
+  next: NextFunction
+) => {
+  const { 0: event } = context.arguments
+
+  event.user = {
+    name: 'slsl',
+    sll: '',
+  }
+
+  const pickedEvent = pick(event, ['type', 'methodArn', 'path', 'headers'])
+  logger.info('authorizer request handler', redactCustomerDetails(pickedEvent))
+
+  // Always has to be called
+  return next()
+}
+
+export const lambdaHandler = hooks(mainFunction, [logRuntime, logEvent])
