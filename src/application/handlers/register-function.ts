@@ -5,6 +5,7 @@ import db from '../infrastructure/database/pg/postgres-connection'
 import { HTTP_STATUS_CODE } from '../../utils/HttpClient/http-status-codes'
 import { v4 as uuidv4 } from 'uuid'
 import AuthService from '../services/auth-service'
+import logger from '../services/logging'
 // const validator = require('validator');
 
 export const lambdaHandler = async function (
@@ -17,14 +18,14 @@ export const lambdaHandler = async function (
     password: string
   }
 
-  console.info('register request', {
+  logger.info('register request', {
     request: redactCustomerDetails(registerParsedBody),
   })
 
   const { email, password } = registerParsedBody
 
   try {
-    // 1) Check if email and password exist
+    // 1) Check if email and password exist in request body
     if (!email || !password) {
       throw new AppError(
         'Please provide email and password!',
@@ -32,7 +33,6 @@ export const lambdaHandler = async function (
       )
     }
 
-    // const rndInt = Math.floor(Math.random() * 100) + 1
     const createUserRequest = { email, password, id: uuidv4() }
 
     // 2) create user / insert new user to database
@@ -42,6 +42,7 @@ export const lambdaHandler = async function (
     )
 
     const authService = new AuthService()
+
     // 3) If everything ok, send token to client
     const responseBody = authService.createAccessToken(createUserRequest)
 
@@ -51,13 +52,13 @@ export const lambdaHandler = async function (
     }
   } catch (err) {
     const error = err as AppError
-    console.error(error)
+    logger.error('register', error)
 
     error.statusCode =
       error.statusCode || HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR
     error.status = error.status || 'error'
 
-    if (error.isOperational) {
+    if (error?.isOperational) {
       return {
         statusCode: error.statusCode,
         body: JSON.stringify({

@@ -11,14 +11,13 @@ import { getUserById } from '../infrastructure/database/pg/query-helpers'
 import { pick } from 'lodash'
 import { redactCustomerDetails } from '../../utils/RedactCustomerDetails'
 import AuthService from '../services/auth-service'
+import logger from '../services/logging'
+
 export const lambdaHandler = async function (
   event: APIGatewayRequestAuthorizerEvent
 ): Promise<APIGatewayAuthorizerResult> {
   const pickedEvent = pick(event, ['type', 'methodArn', 'path'])
-  console.info(
-    JSON.stringify(redactCustomerDetails(pickedEvent)),
-    'authorizer request handler'
-  )
+  logger.info('authorizer request handler', redactCustomerDetails(pickedEvent))
 
   const iamService = new IamService()
   const methodArn = pickedEvent.methodArn
@@ -35,30 +34,30 @@ export const lambdaHandler = async function (
 
     if (!token) {
       const message = 'You are not logged in! Please log in to get access.'
-      console.info(message, 'token failed')
+      logger.info(message)
       throw new AppError(message, HTTP_STATUS_CODE.UNAUTHORIZED)
     }
 
-    console.info('decoding in process....')
+    logger.info('decoding in process....')
 
     // 2) Verification token
     const authService = new AuthService()
     const decoded = await authService.verifyAccessToken(token)
 
-    console.info('token has been decoded...')
+    logger.info('token has been decoded...')
 
     // 2) Check if user exists && password is correct
     const user = await getUserById(decoded.id)
-    console.info(redactCustomerDetails(user), 'user from database')
+    logger.info('user from database', redactCustomerDetails(user))
 
     if (!user) {
       const message = 'The user belonging to this token does no longer exist.'
-      console.info(message, 'user no longer exist')
+      logger.info(message + ' user no longer exist')
 
       throw new AppError(message, HTTP_STATUS_CODE.UNAUTHORIZED)
     }
 
-    console.info('attemting to grant access....')
+    logger.info('attemting to grant access....')
     return iamService.generateAuthResponse('user', 'Allow', methodArn, {
       user,
     })
@@ -69,10 +68,10 @@ export const lambdaHandler = async function (
       user: null,
       message: error.message,
       statuscode: error.statusCode,
-      isOperational: error.isOperational,
+      isOperational: error?.isOperational,
     }
 
-    console.error('Error while trying to grant access', JSON.stringify(context))
+    logger.error('Error while trying to grant access', context)
 
     return iamService.generateAuthResponse('user', 'Deny', methodArn, context)
   }

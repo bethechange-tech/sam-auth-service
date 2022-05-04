@@ -1,24 +1,24 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda'
 import { redactCustomerDetails } from '../../utils/RedactCustomerDetails'
 import { AppError } from '../../utils/appError'
-import db from '../infrastructure/database/pg/postgres-connection'
 import { HTTP_STATUS_CODE } from '../../utils/HttpClient/http-status-codes'
 import AuthService from '../services/auth-service'
 import { getUserByEmail } from '../infrastructure/database/pg/query-helpers'
+import logger from '../services/logging'
 
 export const lambdaHandler = async function (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> {
   if (!event.body) throw new Error('Invalid request payload')
 
-  const loginParsedBody = (JSON.parse(event.body) || {}) as {
+  const loginParsedBody = JSON.parse(event.body) as {
     email: string
     password: string
   }
 
   const authService = new AuthService()
 
-  console.info('login request', {
+  logger.info('login request', {
     request: redactCustomerDetails(loginParsedBody),
   })
 
@@ -52,13 +52,13 @@ export const lambdaHandler = async function (
     }
   } catch (err) {
     const error = err as AppError
-    console.error(error)
+    logger.error('login error', error)
 
     error.statusCode =
       error.statusCode || HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR
     error.status = error.status || 'error'
 
-    if (error.isOperational) {
+    if (error?.isOperational) {
       return {
         statusCode: error.statusCode,
         body: JSON.stringify({

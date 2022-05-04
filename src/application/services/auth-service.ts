@@ -2,6 +2,10 @@ import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import { promisify } from 'util'
 
+
+/**
+ * @class AuthService used authenticate or verify
+ */
 export default class AuthService {
   async isCorrectPassword(candidatePassword: string, userPassword: string) {
     return bcrypt.compare(candidatePassword, userPassword)
