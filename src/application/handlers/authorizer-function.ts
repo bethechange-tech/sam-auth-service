@@ -4,8 +4,6 @@ import {
   APIGatewayAuthorizerResult,
 } from 'aws-lambda'
 import { AppError } from '../../utils/appError'
-// import { promisify } from 'util'
-// import jwt from 'jsonwebtoken'
 import { HTTP_STATUS_CODE } from '../../utils/HttpClient/http-status-codes'
 import { getUserById } from '../infrastructure/database/pg/query-helpers'
 import { pick } from 'lodash'
@@ -52,13 +50,13 @@ export const lambdaHandler = async function (
 
     if (!user) {
       const message = 'The user belonging to this token does no longer exist.'
-      logger.info(message + ' user no longer exist')
+      logger.info(message)
 
       throw new AppError(message, HTTP_STATUS_CODE.UNAUTHORIZED)
     }
 
     logger.info('attemting to grant access....')
-    return iamService.generateAuthResponse('user', 'Allow', methodArn, {
+    return iamService.generateResponse('user', 'Allow', methodArn, {
       user,
     })
   } catch (err) {
@@ -73,6 +71,6 @@ export const lambdaHandler = async function (
 
     logger.error('Error while trying to grant access', context)
 
-    return iamService.generateAuthResponse('user', 'Deny', methodArn, context)
+    return iamService.generateResponse('user', 'Deny', methodArn, context)
   }
 }
