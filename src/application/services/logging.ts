@@ -4,7 +4,7 @@ class Logger {
   private logger: winston.Logger
   public meta: Record<string, any>
   
-  constructor(meta: Record<string, any>) {
+  constructor(meta: {}) {
     this.logger = winston.createLogger({
       level: 'info',
       format: format.combine(format.splat(), format.json()),
@@ -40,6 +40,6 @@ class Logger {
   }
 }
 
-const logger = new Logger({})
+const logger = new Logger()
 
 export default logger
