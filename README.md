@@ -127,6 +127,41 @@ See the [AWS SAM developer guide](https://docs.aws.amazon.com/serverless-applica
 
 Next, you can use AWS Serverless Application Repository to deploy ready to use Apps that go beyond hello world samples and learn how authors developed their applications: [AWS Serverless Application Repository main page](https://aws.amazon.com/serverless/serverlessrepo/)
 
+### DynamoDB
+
+Functions use DynamoDB for storage. In order to run it, execute:
+
+```
+npm run dynamodb:start
+```
+
+And, to stop it
+
+```
+npm run dynamodb:stop
+```
+
+### Run
+
+To run the function, first run
+
+```
+npm run build:local
+```
+
+ to compile the Typescript files into Javascript files,
+
+Once this is completed, run
+```
+sam local start-api
+```
+or
+```
+sam local invoke <MyFunction> -e /MyFixture.json
+```
+To run a local api gateway to test the functions against.
+
+
 
 ## Typescript Setup
 

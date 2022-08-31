@@ -1,0 +1,38 @@
+{
+  "TableName": "SAPMappingTable",
+  "AttributeDefinitions": [
+    {
+      "AttributeName": "serviceReference",
+      "AttributeType": "S"
+    },
+    {
+      "AttributeName": "serviceGroup",
+      "AttributeType": "S"
+    }
+  ],
+  "KeySchema": [
+    {
+      "AttributeName": "serviceReference",
+      "KeyType": "HASH"
+    },
+    {
+      "AttributeName": "serviceGroup",
+      "KeyType": "RANGE"
+    }
+  ],
+  "GlobalSecondaryIndexes": [
+    {
+      "IndexName": "serviceGroupIndex",
+      "KeySchema": [
+        {
+          "AttributeName": "serviceGroup",
+          "KeyType": "HASH"
+        }
+      ],
+      "Projection": {
+        "ProjectionType": "ALL"
+      }
+    }
+  ],
+  "BillingMode": "PAY_PER_REQUEST"
+}

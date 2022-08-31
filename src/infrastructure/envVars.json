@@ -1,0 +1,6 @@
+{
+  "GetConsignmentEvent": {
+    "DYNAMODB_ENDPOINT": "http://172.17.0.1:8000",
+    "DYNAMODB_TABLE": "ShipmentTable"
+  }
+}

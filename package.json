@@ -5,6 +5,12 @@
   "main": "index.js",
   "scripts": {
     "local": "sam build --use-container && sam local start-api",
+    "function": "sam local invoke --env-vars src/infrastructure/envVars.json",
+    "function:GetConsignment": "npm run function -- getConsignmentV2 --event src/infrastructure/events/GetConsignmentEvent.json",
+    "function:GetConsignment:debug": "npm run function:debug -- getConsignmentV2 --event src/infrastructure/events/GetConsignmentEvent.json",
+    "dynamodb:start": "docker-compose up -d",
+    "dynamodb:stop": "docker-compose down",
+    "dynamodb:createTable:Shipment": "aws dynamodb create-table --cli-input-json file://src/infrastructure/schema/ShipmentTable.json --endpoint-url http://localhost:8000",
     "start:local": "npm run build && npm run local",
     "installSourceMapSupport": "npm --prefix ./dist install source-map-support",
     "test": "jest --coverage ./src",
